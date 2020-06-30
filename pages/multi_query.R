@@ -45,7 +45,7 @@ multi_query_ui <- function(){
       
     ),
     # Create a new row for the table.
-    checkboxInput("chk_wide", "Wide or Long?", T),
+    column(1,downloadButton("dwn_infl")) ,column(2,checkboxInput("chk_wide", "Wide or Long?", T)),
     DT::dataTableOutput("tbl_jic")
     
   )
@@ -68,9 +68,13 @@ multi_query_serv <- function(input, output, session){
     if (input$sel_ver != "All") {
       data <- data %>% filter(Version == input$sel_ver)
     }
-    if (input$sel_service != "All"| input$sel_service =="") {
-      data <- data %>% filter(Service %in% input$sel_service)
+    if(is.null(input$sel_service)){ 
+        # do nothing
     }
+    else if(input$sel_service != "All"| input$sel_service =="") {
+        data <- data %>% filter(Service %in% input$sel_service)
+    }
+    
     indices <- c("All", data %>% select(Indice) %>% unique())
     updateSelectInput(session,"sel_indices", "Indices:", choices = indices, selected <- still_selected )
   })
@@ -80,15 +84,24 @@ multi_query_serv <- function(input, output, session){
     try({
       DT::renderDataTable(DT::datatable({
         data <- values$data
-        if (input$sel_ver != "All") {
-          data <- data %>% filter(Version == input$sel_ver)
+        # if (input$sel_ver != "All") {
+        #   data <- data %>% filter(Version == input$sel_ver)
+        # }
+        # if (input$sel_service != "All") {
+        #   data <- data %>% filter(Service %in% input$sel_service)
+        # }
+        
+        if (is.null(input$sel_indices)){
+          # do nothing
+          if(!is.null(input$sel_service)){
+            data <- data %>% filter(Service %in% input$sel_service)
+          }
         }
-        if (input$sel_service != "All") {
-          data <- data %>% filter(Service %in% input$sel_service)
-        }
-        if (input$sel_indices != "All") {
+        else if (input$sel_indices != "All") {
           data <- data %>% filter(Indice %in% input$sel_indices)
         }
+        
+        data <- data %>% mutate(Raw=round(Raw,4), Weighted= round(Weighted,4))
         if(input$chk_wide){
           data %>% select(-Service, -tags,-Long.Title) %>%
 			pivot_longer(cols=c(Raw, Weighted), names_to="Type") %>%
@@ -100,5 +113,14 @@ multi_query_serv <- function(input, output, session){
         
       }))
     })
+  
+  output$dwn_infl <- downloadHandler(
+       filename = function() {
+         paste('inflation', Sys.Date(), '.csv', sep='')
+       },
+       content = function(con) {
+         write.csv(values$data, con, row.names = F)
+       }
+     )
   
 }
