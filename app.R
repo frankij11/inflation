@@ -8,6 +8,7 @@
 #
 
 library(shiny)
+library(shinydashboard)
 library(lubridate)
 source("global.R")
 source("pages/multi_query.R")

@@ -1,6 +1,9 @@
+library(rhandsontable)
 jic.raw <- jic
 multi_query_ui <- function(){ 
-  
+  calculator <- shinydashboard::box(title = "Quick Inflation Calculator", width = 12,
+                                    rHandsontableOutput("hot_calc")
+                                    )
   page <-  tabPanel(
     "Multi Indice Query",
     fluidRow(
@@ -54,7 +57,7 @@ multi_query_ui <- function(){
 }
 multi_query_serv <- function(input, output, session){
   #update Base Year
-
+  
   values <- reactiveValues(data=jic)
   observeEvent(input$num_by,{
     values$data <-  change_BY(input$num_by, jic.raw)
